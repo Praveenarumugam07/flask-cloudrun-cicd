@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-json') // Replace with your credential ID
-        PROJECT_ID = "your-gcp-project-id"
+        PROJECT_ID = "sylvan-hydra-464904-d9"
         REGION = "us-central1"
     }
 
