@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-json')
-        PROJECT_ID = "sylvan-hydra-464904-d9"
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-json') // Replace with your credential ID
+        PROJECT_ID = "your-gcp-project-id"
         REGION = "us-central1"
     }
 
@@ -16,22 +16,23 @@ pipeline {
 
         stage('Install gcloud SDK (if needed)') {
             steps {
-                sh '''
+                sh '''#!/bin/bash
                 if ! command -v gcloud &> /dev/null
                 then
                     echo "Installing gcloud..."
                     curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-453.0.0-linux-x86_64.tar.gz
                     tar -xzf google-cloud-sdk-453.0.0-linux-x86_64.tar.gz
                     ./google-cloud-sdk/install.sh -q
-                    source ./google-cloud-sdk/path.bash.inc
                 fi
+                . ./google-cloud-sdk/path.bash.inc
                 '''
             }
         }
 
         stage('Authenticate with GCP') {
             steps {
-                sh '''
+                sh '''#!/bin/bash
+                . ./google-cloud-sdk/path.bash.inc
                 gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
                 gcloud config set project $PROJECT_ID
                 '''
@@ -40,17 +41,20 @@ pipeline {
 
         stage('Trigger Cloud Build') {
             steps {
-                sh 'gcloud builds submit --config cloudbuild.yaml .'
+                sh '''#!/bin/bash
+                . ./google-cloud-sdk/path.bash.inc
+                gcloud builds submit --config cloudbuild.yaml .
+                '''
             }
         }
     }
 
     post {
         success {
-            echo 'Deployment completed successfully!'
+            echo '✅ Deployment completed successfully!'
         }
         failure {
-            echo 'Deployment failed.'
+            echo '❌ Deployment failed.'
         }
     }
 }
