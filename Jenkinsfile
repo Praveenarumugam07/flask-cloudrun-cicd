@@ -4,7 +4,7 @@ pipeline {
     environment {
         PROJECT_ID = 'sylvan-hydra-464904-d9'
         REGION = 'asia-south1'
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-json') // Jenkins credentials ID for your service account key JSON
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-json') // Jenkins credentials ID (Secret File type)
     }
 
     stages {
@@ -26,6 +26,7 @@ pipeline {
                     tar -xzf google-cloud-sdk-453.0.0-linux-x86_64.tar.gz
                     ./google-cloud-sdk/install.sh -q
                 fi
+
                 echo "Adding gcloud to PATH..."
                 export PATH=$PATH:$PWD/google-cloud-sdk/bin
                 gcloud --version
@@ -36,8 +37,8 @@ pipeline {
         stage('Authenticate with GCP') {
             steps {
                 sh '''
-                echo $GOOGLE_APPLICATION_CREDENTIALS > sa_key.json
-                export GOOGLE_APPLICATION_CREDENTIALS=sa_key.json
+                echo "Activating service account..."
+                export PATH=$PATH:$PWD/google-cloud-sdk/bin
                 gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
                 gcloud config set project $PROJECT_ID
                 '''
