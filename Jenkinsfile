@@ -2,21 +2,23 @@ pipeline {
     agent any
 
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-json') // Replace with your credential ID
-        PROJECT_ID = "sylvan-hydra-464904-d9"
-        REGION = "us-central1"
+        PROJECT_ID = 'sylvan-hydra-464904-d9'
+        REGION = 'asia-south1'
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-json') // Jenkins credentials ID for your service account key JSON
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/Praveenarumugam07/flask-cloudrun-cicd.git'
+                git url: 'https://github.com/Praveenarumugam07/flask-cloudrun-cicd.git', branch: 'main'
             }
         }
 
         stage('Install gcloud SDK (if needed)') {
             steps {
-                sh '''#!/bin/bash
+                sh '''
+                echo "Checking if gcloud is already installed..."
                 if ! command -v gcloud &> /dev/null
                 then
                     echo "Installing gcloud..."
@@ -24,15 +26,18 @@ pipeline {
                     tar -xzf google-cloud-sdk-453.0.0-linux-x86_64.tar.gz
                     ./google-cloud-sdk/install.sh -q
                 fi
-                . ./google-cloud-sdk/path.bash.inc
+                echo "Adding gcloud to PATH..."
+                export PATH=$PATH:$PWD/google-cloud-sdk/bin
+                gcloud --version
                 '''
             }
         }
 
         stage('Authenticate with GCP') {
             steps {
-                sh '''#!/bin/bash
-                . ./google-cloud-sdk/path.bash.inc
+                sh '''
+                echo $GOOGLE_APPLICATION_CREDENTIALS > sa_key.json
+                export GOOGLE_APPLICATION_CREDENTIALS=sa_key.json
                 gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
                 gcloud config set project $PROJECT_ID
                 '''
@@ -41,20 +46,22 @@ pipeline {
 
         stage('Trigger Cloud Build') {
             steps {
-                sh '''#!/bin/bash
-                . ./google-cloud-sdk/path.bash.inc
-                gcloud builds submit --config cloudbuild.yaml .
+                sh '''
+                echo "Triggering Cloud Build..."
+                export PATH=$PATH:$PWD/google-cloud-sdk/bin
+                gcloud builds submit --region=$REGION --project=$PROJECT_ID
                 '''
             }
         }
+
     }
 
     post {
         success {
-            echo '✅ Deployment completed successfully!'
+            echo "✅ Deployment succeeded."
         }
         failure {
-            echo '❌ Deployment failed.'
+            echo "❌ Deployment failed."
         }
     }
 }
