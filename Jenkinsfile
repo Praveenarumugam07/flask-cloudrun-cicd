@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         PROJECT_ID = 'sylvan-hydra-464904-d9'
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-credentials') // Jenkins Secret File credentials ID
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('gcp-service-account-json') // Jenkins Secret File credentials ID
     }
 
     stages {
